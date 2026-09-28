@@ -109,6 +109,12 @@ class ResidentForm(forms.ModelForm):
             'employment_status',
             'contact_number',
             'residency_status',
+            'is_pwd',
+            'is_4ps',
+            'is_single_parent',
+            'is_voter',
+            'voter_id',
+            'blood_type',
         ]
         widgets = {
             'household': forms.Select(attrs={'class': 'form-select'}),
@@ -151,6 +157,12 @@ class ResidentForm(forms.ModelForm):
                 'placeholder': '09XX-XXX-XXXX',
             }),
             'residency_status': forms.Select(attrs={'class': 'form-select'}),
+            'is_pwd': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_4ps': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_single_parent': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_voter': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'voter_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Voter ID No. (optional)'}),
+            'blood_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. O+, A+, B-'}),
         }
 
     def clean_first_name(self):

@@ -269,6 +269,14 @@ class Resident(models.Model):
     contact_number = models.CharField(max_length=30, blank=True, default="", verbose_name="Contact Number")
     residency_status = models.CharField(max_length=40, choices=RESIDENCY_STATUS_CHOICES, default='Permanent Resident', verbose_name="Residency Status")
 
+    # Demographic Classifications & Sectoral Tags
+    is_pwd = models.BooleanField(default=False, verbose_name="PWD (Person with Disability)")
+    is_4ps = models.BooleanField(default=False, verbose_name="4Ps Beneficiary")
+    is_single_parent = models.BooleanField(default=False, verbose_name="Single / Solo Parent")
+    is_voter = models.BooleanField(default=False, verbose_name="Registered Voter")
+    voter_id = models.CharField(max_length=50, blank=True, default="", verbose_name="Voter ID No.")
+    blood_type = models.CharField(max_length=10, blank=True, default="N/A", verbose_name="Blood Type")
+
     # Retained optional fields for backwards compatibility
     purok = models.CharField(max_length=150, blank=True, default="", verbose_name="Purok")
     household_number = models.CharField(max_length=50, blank=True, default="", verbose_name="Household No.")
@@ -326,6 +334,10 @@ class Resident(models.Model):
     @property
     def is_senior(self):
         return self.age >= 60
+
+    @property
+    def is_sk_youth(self):
+        return 15 <= self.age <= 30
 
     @property
     def is_verified(self):
@@ -446,3 +458,34 @@ class Announcement(models.Model):
         ordering = ['-date_posted']
         verbose_name = "Announcement"
         verbose_name_plural = "Announcements"
+
+
+# ==========================================
+# 6. SYSTEM AUDIT LOG (Activity Trail)
+# ==========================================
+class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ('CREATE', 'Create Record'),
+        ('UPDATE', 'Update Record'),
+        ('DELETE', 'Delete Record'),
+        ('VERIFY', 'Verify Household'),
+        ('PRINT', 'Print Document / ID'),
+        ('LOGIN', 'User Login'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="User / Staff")
+    action_type = models.CharField(max_length=20, choices=ACTION_CHOICES, verbose_name="Action Type")
+    module_name = models.CharField(max_length=50, verbose_name="Module / Section")
+    description = models.TextField(verbose_name="Description / Details")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP Address")
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Timestamp")
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = "Audit Log"
+        verbose_name_plural = "Audit Logs"
+
+    def __str__(self):
+        username = self.user.username if self.user else "System"
+        return f"[{self.timestamp.strftime('%Y-%m-%d %H:%M')}] {username} - {self.action_type} ({self.module_name})"
+

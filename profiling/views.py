@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from .models import (
     Household, Resident, ResidentConcern, UserProfile,
-    DocumentRequest, BlotterCase, Announcement,
+    DocumentRequest, BlotterCase, Announcement, AuditLog,
     PUROK_CHOICES, HOUSE_TYPE_CHOICES, HOUSING_OWNERSHIP_CHOICES,
     WATER_SOURCE_CHOICES, ELECTRICITY_CHOICES, TOILET_FACILITY_CHOICES,
     CIVIL_STATUS_CHOICES, RELATIONSHIP_CHOICES, EDUCATION_CHOICES,
@@ -47,6 +47,23 @@ def admin_required(view_func):
             return redirect('dashboard')
         return view_func(request, *args, **kwargs)
     return wrapper
+
+
+def log_audit(request, action_type, module_name, description):
+    """Helper to record security audit logs."""
+    try:
+        ip = request.META.get('REMOTE_ADDR')
+        user = request.user if hasattr(request, 'user') and request.user.is_authenticated else None
+        AuditLog.objects.create(
+            user=user,
+            action_type=action_type,
+            module_name=module_name,
+            description=description,
+            ip_address=ip
+        )
+    except Exception:
+        pass
+
 
 
 # ==========================================
@@ -405,6 +422,7 @@ def resident_list_view(request):
     civil_filter = request.GET.get('civil_status', '').strip()
     age_group = request.GET.get('age_group', '').strip()
     verification_filter = request.GET.get('verification', '').strip()
+    tag_filter = request.GET.get('tag', '').strip()
 
     residents = Resident.objects.all().select_related('household')
 
@@ -417,7 +435,8 @@ def resident_list_view(request):
             Q(household__household_number__icontains=query) |
             Q(household_number__icontains=query) |
             Q(purok__icontains=query) |
-            Q(household__purok__icontains=query)
+            Q(household__purok__icontains=query) |
+            Q(occupation__icontains=query)
         )
 
     if purok_filter:
@@ -437,6 +456,19 @@ def resident_list_view(request):
         residents = residents.filter(age__gte=25, age__lte=59)
     elif age_group == 'seniors':
         residents = residents.filter(age__gte=60)
+
+    if tag_filter == 'senior':
+        residents = residents.filter(age__gte=60)
+    elif tag_filter == 'sk_youth':
+        residents = residents.filter(age__gte=15, age__lte=30)
+    elif tag_filter == 'pwd':
+        residents = residents.filter(is_pwd=True)
+    elif tag_filter == '4ps':
+        residents = residents.filter(is_4ps=True)
+    elif tag_filter == 'single_parent':
+        residents = residents.filter(is_single_parent=True)
+    elif tag_filter == 'voter':
+        residents = residents.filter(is_voter=True)
 
     if verification_filter:
         if verification_filter == 'Approved':
@@ -458,10 +490,28 @@ def resident_list_view(request):
         'sex_filter': sex_filter,
         'civil_filter': civil_filter,
         'age_group': age_group,
+        'tag_filter': tag_filter,
         'verification_filter': verification_filter,
         'is_admin': is_admin(request.user),
     }
     return render(request, 'profiling/resident_list.html', context)
+
+
+@login_required
+def resident_id_card_view(request, pk):
+    """View and print official Digital Barangay ID for a resident."""
+    resident = get_object_or_404(Resident, pk=pk)
+    log_audit(request, 'PRINT', 'Barangay ID Card', f"Printed/Generated Barangay ID for {resident.full_name} ({resident.formatted_id})")
+    return render(request, 'profiling/barangay_id.html', {'resident': resident})
+
+
+@login_required
+@admin_required
+def audit_logs_view(request):
+    """Admin view for system security audit trail."""
+    logs = AuditLog.objects.select_related('user').order_by('-timestamp')[:200]
+    return render(request, 'profiling/audit_logs.html', {'logs': logs})
+
 
 
 @login_required

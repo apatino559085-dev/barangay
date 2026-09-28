@@ -90,6 +90,13 @@
           <span>Users</span>
         </a>
       </li>
+
+      <li class="sidebar-item">
+        <a href="{% url 'audit_logs' %}" class="sidebar-link {% if 'audit' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="bi bi-shield-check"></i>
+          <span>Audit Logs</span>
+        </a>
+      </li>
       {% endif %}
 
       <li class="sidebar-item">

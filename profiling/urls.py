@@ -27,6 +27,7 @@ urlpatterns = [
     path('residents/<int:pk>/', views.resident_detail_view, name='resident_detail'),
     path('residents/<int:pk>/edit/', views.resident_update_view, name='resident_update'),
     path('residents/<int:pk>/delete/', views.resident_delete_view, name='resident_delete'),
+    path('residents/<int:pk>/id-card/', views.resident_id_card_view, name='resident_id_card'),
 
     # Reports & Data Export
     path('reports/', views.reports_view, name='reports'),
@@ -40,10 +41,11 @@ urlpatterns = [
     path('concerns/<int:pk>/action/', views.concern_action_view, name='concern_action'),
     path('concerns/admin/', views.concerns_list_view, name='admin_concerns'),
 
-    # Administration: User Management & Profile
+    # Administration: User Management, Profile, & Audit Logs
     path('users/', views.user_management_view, name='user_management'),
     path('users/<int:pk>/toggle/', views.user_toggle_status_view, name='user_toggle_status'),
     path('profile/', views.admin_profile_view, name='admin_profile'),
+    path('audit-logs/', views.audit_logs_view, name='audit_logs'),
 
     # Secondary / Legacy Service Endpoints
     path('documents/', views.document_issuance_view, name='document_issuance'),

@@ -1,10 +1,10 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from profiling.models import Resident
+from profiling.models import Household, Resident
 
 
 class Command(BaseCommand):
-    help = "Seeds initial admin, barangay staff official, and realistic household profiling records."
+    help = "Seeds initial admin, barangay staff official, households, and realistic resident profiling records."
 
     def handle(self, *args, **options):
         # 1. Administrator User
@@ -22,8 +22,6 @@ class Command(BaseCommand):
             admin_user.set_password("admin123")
             admin_user.save()
             self.stdout.write(self.style.SUCCESS("Created Barangay Administrator: admin / admin123"))
-        else:
-            self.stdout.write(self.style.NOTICE("Administrator 'admin' already exists."))
 
         # 2. Field Staff / Barangay Official User
         staff_user, staff_created = User.objects.get_or_create(
@@ -40,43 +38,71 @@ class Command(BaseCommand):
             staff_user.set_password("staff123")
             staff_user.save()
             self.stdout.write(self.style.SUCCESS("Created Barangay Staff / Official: staff / staff123"))
-        else:
-            self.stdout.write(self.style.NOTICE("Staff official 'staff' already exists."))
 
-        # 3. Seed Realistic Household Profiling Records
-        # Reset and populate clean household data if needed
-        if Resident.objects.count() == 0:
-            sample_households = [
-                # Household 1 - Dela Cruz Family (4 members in Purok 1 Centro)
-                {"full_name": "Juan Dela Cruz", "age": 42, "gender": "Male", "civil_status": "Married", "purok": "Purok 1 Centro", "occupation": "Civil Engineer", "contact_number": "0917-123-4567", "household_number": "HH-001", "household_head": "Juan Dela Cruz", "household_members_count": 4, "relationship_to_head": "Head"},
-                {"full_name": "Maria Corazon Dela Cruz", "age": 39, "gender": "Female", "civil_status": "Married", "purok": "Purok 1 Centro", "occupation": "Public School Teacher", "contact_number": "0918-234-5678", "household_number": "HH-001", "household_head": "Juan Dela Cruz", "household_members_count": 4, "relationship_to_head": "Spouse"},
-                {"full_name": "Gabriel Santos Dela Cruz", "age": 14, "gender": "Male", "civil_status": "Single", "purok": "Purok 1 Centro", "occupation": "High School Student", "contact_number": "", "household_number": "HH-001", "household_head": "Juan Dela Cruz", "household_members_count": 4, "relationship_to_head": "Son"},
-                {"full_name": "Angelica Santos Dela Cruz", "age": 9, "gender": "Female", "civil_status": "Single", "purok": "Purok 1 Centro", "occupation": "Elementary Student", "contact_number": "", "household_number": "HH-001", "household_head": "Juan Dela Cruz", "household_members_count": 4, "relationship_to_head": "Daughter"},
-
-                # Household 2 - Bautista Family (3 members in Purok 2 Riverside)
-                {"full_name": "Elena Morales Bautista", "age": 63, "gender": "Female", "civil_status": "Widowed", "purok": "Purok 2 Riverside", "occupation": "Sari-Sari Store Owner", "contact_number": "0920-456-7890", "household_number": "HH-002", "household_head": "Elena Morales Bautista", "household_members_count": 3, "relationship_to_head": "Head"},
-                {"full_name": "Clarissa Joy Bautista", "age": 28, "gender": "Female", "civil_status": "Single", "purok": "Purok 2 Riverside", "occupation": "Call Center Agent", "contact_number": "0932-678-4321", "household_number": "HH-002", "household_head": "Elena Morales Bautista", "household_members_count": 3, "relationship_to_head": "Daughter"},
-                {"full_name": "Joshua Morales Bautista", "age": 16, "gender": "Male", "civil_status": "Single", "purok": "Purok 2 Riverside", "occupation": "Junior High Student", "contact_number": "", "household_number": "HH-002", "household_head": "Elena Morales Bautista", "household_members_count": 3, "relationship_to_head": "Son"},
-
-                # Household 3 - Ramos Family (2 members in Purok 2 Riverside)
-                {"full_name": "Rodrigo Duterte Ramos", "age": 68, "gender": "Male", "civil_status": "Widowed", "purok": "Purok 2 Riverside", "occupation": "Retired Barangay Official", "contact_number": "0919-345-6789", "household_number": "HH-003", "household_head": "Rodrigo Duterte Ramos", "household_members_count": 2, "relationship_to_head": "Head"},
-                {"full_name": "Emilio Ramos", "age": 35, "gender": "Male", "civil_status": "Single", "purok": "Purok 2 Riverside", "occupation": "Carpenter", "contact_number": "0931-567-5432", "household_number": "HH-003", "household_head": "Rodrigo Duterte Ramos", "household_members_count": 2, "relationship_to_head": "Son"},
-
-                # Household 4 - Mendoza Family (5 members in Purok 5 Maharlika)
-                {"full_name": "Danilo Cruz Mendoza", "age": 55, "gender": "Male", "civil_status": "Married", "purok": "Purok 5 Maharlika", "occupation": "Tricycle Driver", "contact_number": "0925-901-2345", "household_number": "HH-004", "household_head": "Danilo Cruz Mendoza", "household_members_count": 5, "relationship_to_head": "Head"},
-                {"full_name": "Josefina Mercado Mendoza", "age": 52, "gender": "Female", "civil_status": "Married", "purok": "Purok 5 Maharlika", "occupation": "Homemaker", "contact_number": "0926-012-3456", "household_number": "HH-004", "household_head": "Danilo Cruz Mendoza", "household_members_count": 5, "relationship_to_head": "Spouse"},
-                {"full_name": "Daniel Padilla Mendoza", "age": 19, "gender": "Male", "civil_status": "Single", "purok": "Purok 5 Maharlika", "occupation": "College Student", "contact_number": "0925-111-2233", "household_number": "HH-004", "household_head": "Danilo Cruz Mendoza", "household_members_count": 5, "relationship_to_head": "Son"},
-                {"full_name": "Daphne Mercado Mendoza", "age": 15, "gender": "Female", "civil_status": "Single", "purok": "Purok 5 Maharlika", "occupation": "Student", "contact_number": "", "household_number": "HH-004", "household_head": "Danilo Cruz Mendoza", "household_members_count": 5, "relationship_to_head": "Daughter"},
-                {"full_name": "Luzviminda Cruz", "age": 78, "gender": "Female", "civil_status": "Widowed", "purok": "Purok 5 Maharlika", "occupation": "Senior Pensioner", "contact_number": "", "household_number": "HH-004", "household_head": "Danilo Cruz Mendoza", "household_members_count": 5, "relationship_to_head": "Mother"},
-
-                # Household 5 - Villanueva Family (4 members in Purok 7 Ilaya)
-                {"full_name": "Fernando Poe Villanueva", "age": 48, "gender": "Male", "civil_status": "Married", "purok": "Purok 7 Ilaya", "occupation": "Fisherman / Farmer", "contact_number": "0929-345-7654", "household_number": "HH-005", "household_head": "Fernando Poe Villanueva", "household_members_count": 4, "relationship_to_head": "Head"},
-                {"full_name": "Rosario Alcantara Villanueva", "age": 45, "gender": "Female", "civil_status": "Married", "purok": "Purok 7 Ilaya", "occupation": "Fish Vendor", "contact_number": "0930-456-6543", "household_number": "HH-005", "household_head": "Fernando Poe Villanueva", "household_members_count": 4, "relationship_to_head": "Spouse"},
-                {"full_name": "Sophia Nicole Villanueva", "age": 17, "gender": "Female", "civil_status": "Single", "purok": "Purok 7 Ilaya", "occupation": "Senior High Student", "contact_number": "", "household_number": "HH-005", "household_head": "Fernando Poe Villanueva", "household_members_count": 4, "relationship_to_head": "Daughter"},
-                {"full_name": "Carlo James Villanueva", "age": 12, "gender": "Male", "civil_status": "Single", "purok": "Purok 7 Ilaya", "occupation": "Grade School Student", "contact_number": "", "household_number": "HH-005", "household_head": "Fernando Poe Villanueva", "household_members_count": 4, "relationship_to_head": "Son"},
+        # 3. Seed Households and Residents
+        if Household.objects.count() == 0:
+            households_data = [
+                {
+                    "number": "HH-001", "purok": "Purok 1", "address": "123 Centro St., Purok 1", "head": "Juan Dela Cruz",
+                    "members": [
+                        {"first": "Juan", "middle": "Santos", "last": "Dela Cruz", "age": 42, "sex": "Male", "status": "Married", "rel": "Head", "occ": "Civil Engineer", "phone": "0917-123-4567", "voter": True, "voter_id": "V-12345"},
+                        {"first": "Maria Corazon", "middle": "Santos", "last": "Dela Cruz", "age": 39, "sex": "Female", "status": "Married", "rel": "Spouse", "occ": "Public School Teacher", "phone": "0918-234-5678", "voter": True},
+                        {"first": "Gabriel", "middle": "Santos", "last": "Dela Cruz", "age": 19, "sex": "Male", "status": "Single", "rel": "Son", "occ": "College Student", "phone": "0918-999-0000", "voter": True},
+                        {"first": "Angelica", "middle": "Santos", "last": "Dela Cruz", "age": 9, "sex": "Female", "status": "Single", "rel": "Daughter", "occ": "Elementary Student", "phone": "", "voter": False},
+                    ]
+                },
+                {
+                    "number": "HH-002", "purok": "Purok 2", "address": "45 Riverside Road, Purok 2", "head": "Elena Morales Bautista",
+                    "members": [
+                        {"first": "Elena", "middle": "Morales", "last": "Bautista", "age": 63, "sex": "Female", "status": "Widowed", "rel": "Head", "occ": "Sari-Sari Store Owner", "phone": "0920-456-7890", "voter": True, "single_parent": True, "pwd": True},
+                        {"first": "Clarissa Joy", "middle": "Morales", "last": "Bautista", "age": 28, "sex": "Female", "status": "Single", "rel": "Daughter", "occ": "Call Center Agent", "phone": "0932-678-4321", "voter": True},
+                        {"first": "Joshua", "middle": "Morales", "last": "Bautista", "age": 16, "sex": "Male", "status": "Single", "rel": "Son", "occ": "Junior High Student", "phone": "", "voter": False},
+                    ]
+                },
+                {
+                    "number": "HH-003", "purok": "Purok 5", "address": "88 Maharlika Highway, Purok 5", "head": "Danilo Cruz Mendoza",
+                    "members": [
+                        {"first": "Danilo", "middle": "Cruz", "last": "Mendoza", "age": 55, "sex": "Male", "status": "Married", "rel": "Head", "occ": "Tricycle Driver", "phone": "0925-901-2345", "voter": True, "four_ps": True},
+                        {"first": "Josefina", "middle": "Mercado", "last": "Mendoza", "age": 52, "sex": "Female", "status": "Married", "rel": "Spouse", "occ": "Homemaker", "phone": "0926-012-3456", "voter": True, "four_ps": True},
+                        {"first": "Daniel", "middle": "Mercado", "last": "Mendoza", "age": 21, "sex": "Male", "status": "Single", "rel": "Son", "occ": "College Student", "phone": "0925-111-2233", "voter": True},
+                        {"first": "Luzviminda", "middle": "Cruz", "last": "Mendoza", "age": 78, "sex": "Female", "status": "Widowed", "rel": "Mother", "occ": "Senior Pensioner", "phone": "", "voter": True, "pwd": True},
+                    ]
+                }
             ]
 
-            for data in sample_households:
-                Resident.objects.create(**data)
+            for hh_info in households_data:
+                hh = Household.objects.create(
+                    household_number=hh_info["number"],
+                    purok=hh_info["purok"],
+                    complete_address=hh_info["address"],
+                    head_name=hh_info["head"],
+                    members_count=len(hh_info["members"]),
+                    verification_status='Approved',
+                    profiled_by=admin_user,
+                    verified_by=admin_user
+                )
 
-            self.stdout.write(self.style.SUCCESS(f"Successfully seeded {len(sample_households)} household profiling records!"))
+                for m in hh_info["members"]:
+                    Resident.objects.create(
+                        household=hh,
+                        first_name=m["first"],
+                        middle_name=m["middle"],
+                        last_name=m["last"],
+                        age=m["age"],
+                        sex=m["sex"],
+                        gender=m["sex"],
+                        civil_status=m["status"],
+                        relationship_to_head=m["rel"],
+                        occupation=m["occ"],
+                        contact_number=m["phone"],
+                        is_voter=m.get("voter", False),
+                        voter_id=m.get("voter_id", ""),
+                        is_4ps=m.get("four_ps", False),
+                        is_pwd=m.get("pwd", False),
+                        is_single_parent=m.get("single_parent", False),
+                        purok=hh_info["purok"],
+                        household_number=hh_info["number"],
+                        household_head=hh_info["head"]
+                    )
+
+            self.stdout.write(self.style.SUCCESS("Successfully seeded sample households and residents!"))
