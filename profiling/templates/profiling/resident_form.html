@@ -1,0 +1,232 @@
+{% extends 'profiling/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ title }} — Barangay Profiling{% endblock %}
+{% block header_title %}Resident Information Entry{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <!-- Header with Back Button -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <h4 class="fw-bold text-dark mb-1">{{ title }}</h4>
+        <p class="text-muted small mb-0">Record resident individual belonging to a profiled household.</p>
+      </div>
+      <a href="{% if selected_household %}{% url 'household_detail' selected_household.pk %}{% else %}{% url 'resident_list' %}{% endif %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back
+      </a>
+    </div>
+
+    <!-- Main Resident Form Card -->
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-body p-4">
+        <form method="POST" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2">
+            {% for error in form.non_field_errors %}
+              <div><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ error }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Section 0: Household Association -->
+          <div class="bg-light p-3 rounded-2 border mb-4">
+            <h6 class="fw-bold text-primary mb-2">
+              <i class="bi bi-house-door-fill me-1"></i> Household Association
+            </h6>
+            {% if selected_household %}
+              <input type="hidden" name="household_id" value="{{ selected_household.pk }}">
+              <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                  <span class="text-muted small d-block">Household No:</span>
+                  <strong class="text-primary fs-6">{{ selected_household.household_number }}</strong>
+                </div>
+                <div class="col-md-4">
+                  <span class="text-muted small d-block">Purok:</span>
+                  <strong>{{ selected_household.purok }}</strong>
+                </div>
+                <div class="col-md-4">
+                  <span class="text-muted small d-block">Head of Family:</span>
+                  <strong>{{ selected_household.head_name }}</strong>
+                </div>
+              </div>
+            {% else %}
+              <div class="row g-2 align-items-center">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Select Household</label>
+                  <select name="household_id" class="form-select" required>
+                    <option value="">-- Choose Household --</option>
+                    {% for hh in households %}
+                    <option value="{{ hh.pk }}" {% if resident.household.pk == hh.pk %}selected{% endif %}>
+                      {{ hh.household_number }} - {{ hh.head_name }} ({{ hh.purok }})
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <span class="text-muted small d-block mb-1">New Household?</span>
+                  <a href="{% url 'household_create' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus-lg me-1"></i> Create Household Profile First
+                  </a>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Section 1: Personal Information -->
+          <div class="border-bottom pb-3 mb-4">
+            <h6 class="fw-bold text-primary mb-3">
+              <i class="bi bi-person-vcard-fill me-1"></i> 1. Personal Names & Demographics
+            </h6>
+            <div class="row g-3">
+              <!-- First Name -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">First Name <span class="text-danger">*</span></label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Middle Name -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Middle Name</label>
+                {{ form.middle_name }}
+                {% if form.middle_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.middle_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Last Name -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Last Name <span class="text-danger">*</span></label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Birth Date -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Birth Date</label>
+                {{ form.birthdate }}
+                {% if form.birthdate.errors %}
+                  <div class="text-danger small mt-1">{{ form.birthdate.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Age -->
+              <div class="col-md-2">
+                <label class="form-label small fw-bold">Age <span class="text-danger">*</span></label>
+                {{ form.age }}
+                {% if form.age.errors %}
+                  <div class="text-danger small mt-1">{{ form.age.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Sex -->
+              <div class="col-md-3">
+                <label class="form-label small fw-bold">Sex <span class="text-danger">*</span></label>
+                {{ form.sex }}
+                {% if form.sex.errors %}
+                  <div class="text-danger small mt-1">{{ form.sex.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Civil Status -->
+              <div class="col-md-3">
+                <label class="form-label small fw-bold">Civil Status</label>
+                {{ form.civil_status }}
+                {% if form.civil_status.errors %}
+                  <div class="text-danger small mt-1">{{ form.civil_status.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Household Relationship & Contact -->
+          <div class="border-bottom pb-3 mb-4">
+            <h6 class="fw-bold text-primary mb-3">
+              <i class="bi bi-people-fill me-1"></i> 2. Relationship & Residency
+            </h6>
+            <div class="row g-3">
+              <!-- Relationship to Head -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Relationship to Household Head <span class="text-danger">*</span></label>
+                {{ form.relationship_to_head }}
+                {% if form.relationship_to_head.errors %}
+                  <div class="text-danger small mt-1">{{ form.relationship_to_head.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Contact Number -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Contact Number</label>
+                {{ form.contact_number }}
+                {% if form.contact_number.errors %}
+                  <div class="text-danger small mt-1">{{ form.contact_number.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Residency Status -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Residency Status</label>
+                {{ form.residency_status }}
+                {% if form.residency_status.errors %}
+                  <div class="text-danger small mt-1">{{ form.residency_status.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Socio-Economic & Education -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-primary mb-3">
+              <i class="bi bi-mortarboard-fill me-1"></i> 3. Educational Attainment & Employment
+            </h6>
+            <div class="row g-3">
+              <!-- Educational Attainment -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Educational Attainment</label>
+                {{ form.educational_attainment }}
+                {% if form.educational_attainment.errors %}
+                  <div class="text-danger small mt-1">{{ form.educational_attainment.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Employment Status -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Employment Status</label>
+                {{ form.employment_status }}
+                {% if form.employment_status.errors %}
+                  <div class="text-danger small mt-1">{{ form.employment_status.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Occupation -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Occupation / Livelihood</label>
+                {{ form.occupation }}
+                {% if form.occupation.errors %}
+                  <div class="text-danger small mt-1">{{ form.occupation.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+            <a href="{% if selected_household %}{% url 'household_detail' selected_household.pk %}{% else %}{% url 'resident_list' %}{% endif %}" class="btn btn-light border px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4 fw-semibold">
+              <i class="bi bi-check-lg me-1"></i> Save Resident Information
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends 'profiling/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Blotter & Lupon Tagapamayapa Records{% endblock %}
+{% block header_title %}Blotter & Lupon Records{% endblock %}
+
+{% block content %}
+
+<!-- Blotter & Lupon Metric Cards Grid -->
+<div class="row g-3 mb-4">
+  <!-- Total Filed Cases -->
+  <div class="col-sm-6 col-xl font-sm">
+    <div class="stat-card" style="border-left: 4px solid #4f46e5;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-secondary small fw-bold text-uppercase tracking-wider">Total Filed Cases</span>
+          <div class="stat-number mt-2 text-indigo" style="color: #4f46e5;">{{ total_cases|default:0 }}</div>
+          <small class="text-muted">Recorded complaints</small>
+        </div>
+        <div class="feature-icon-wrapper icon-indigo mb-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-folder-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Cases -->
+  <div class="col-sm-6 col-xl font-sm">
+    <div class="stat-card" style="border-left: 4px solid #dc2626;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-secondary small fw-bold text-uppercase tracking-wider">Pending Cases</span>
+          <div class="stat-number mt-2 text-danger">{{ pending_cases|default:0 }}</div>
+          <small class="text-danger fw-semibold" style="font-size: 0.78rem;">Under investigation</small>
+        </div>
+        <div class="feature-icon-wrapper icon-rose mb-0" style="width: 44px; height: 44px; font-size: 1.2rem; background-color: #fee2e2; color: #dc2626;">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scheduled Hearings -->
+  <div class="col-sm-6 col-xl font-sm">
+    <div class="stat-card" style="border-left: 4px solid #d97706;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-secondary small fw-bold text-uppercase tracking-wider">Scheduled Hearings</span>
+          <div class="stat-number mt-2 text-warning" style="color: #d97706;">{{ scheduled_hearings|default:0 }}</div>
+          <small class="text-warning fw-semibold" style="font-size: 0.78rem; color: #d97706;">Lupon mediation active</small>
+        </div>
+        <div class="feature-icon-wrapper icon-amber mb-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-calendar-event-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settled / Resolved Cases -->
+  <div class="col-sm-6 col-xl font-sm">
+    <div class="stat-card" style="border-left: 4px solid #059669;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-secondary small fw-bold text-uppercase tracking-wider">Settled Cases</span>
+          <div class="stat-number mt-2 text-success">{{ settled_cases|default:0 }}</div>
+          <small class="text-success fw-semibold" style="font-size: 0.78rem;">Amicable agreement</small>
+        </div>
+        <div class="feature-icon-wrapper icon-emerald mb-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Referred to Court -->
+  <div class="col-sm-6 col-xl font-sm">
+    <div class="stat-card" style="border-left: 4px solid #2563eb;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-secondary small fw-bold text-uppercase tracking-wider">Referred to Court</span>
+          <div class="stat-number mt-2 text-primary">{{ referred_cases|default:0 }}</div>
+          <small class="text-muted" style="font-size: 0.78rem;">Cert. to File Action</small>
+        </div>
+        <div class="feature-icon-wrapper icon-blue mb-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-bank"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Table and Lupon Sidebar Row -->
+<div class="row g-4">
+  <!-- Recent Cases Table Column -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden h-100">
+      <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+        <div>
+          <h6 class="fw-bold mb-0 text-slate-900">Recent Blotter & Dispute Cases</h6>
+          <small class="text-muted">Recorded incident complaints and mediation proceedings</small>
+        </div>
+        <button class="btn btn-sm btn-primary px-3 rounded-2 fw-semibold" onclick="openNewBlotterModal()">
+          <i class="bi bi-plus-circle me-1"></i> New Case
+        </button>
+      </div>
+
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-custom align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Case No.</th>
+                <th>Complainant</th>
+                <th>Respondent</th>
+                <th>Incident Type</th>
+                <th>Date Filed</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if blotter_cases %}
+                {% for case in blotter_cases %}
+                <tr>
+                  <td><span class="fw-bold text-primary">{{ case.case_number }}</span></td>
+                  <td>
+                    <div class="fw-semibold text-dark">{{ case.complainant_name }}</div>
+                    <small class="text-muted">{{ case.complainant_address }}</small>
+                  </td>
+                  <td>
+                    <div class="fw-semibold text-dark">{{ case.respondent_name }}</div>
+                    <small class="text-muted">{{ case.respondent_address }}</small>
+                  </td>
+                  <td><span class="badge bg-light text-dark border">{{ case.incident_type }}</span></td>
+                  <td class="small text-muted">{{ case.date_filed|date:"M d, Y" }}</td>
+                  <td>
+                    {% if case.status == 'Pending' %}
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1">
+                        🔴 Pending
+                      </span>
+                    {% elif case.status == 'Scheduled' %}
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1">
+                        🟡 Hearing Scheduled
+                      </span>
+                    {% elif case.status == 'Settled' %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">
+                        🟢 Settled
+                      </span>
+                    {% else %}
+                      <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2 py-1">
+                        🔵 Referred to Court
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-light btn-sm text-secondary" title="View Case Details" onclick="alert('Case No: {{ case.case_number }}\nComplainant: {{ case.complainant_name }}\nRespondent: {{ case.respondent_name }}\nDetails: {{ case.details|default:"No details" }}');">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="7" class="text-center py-5">
+                    <div class="text-muted">
+                      <i class="bi bi-folder-x fs-1 d-block mb-2 opacity-50"></i>
+                      <h6 class="fw-bold mb-1">No Blotter Cases Recorded</h6>
+                      <p class="small mb-3">No dispute complaints or incident reports filed yet.</p>
+                      <button class="btn btn-primary btn-sm px-3" onclick="openNewBlotterModal()">
+                        <i class="bi bi-plus-circle me-1"></i> Record First Blotter Case
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lupon Sidebar Shortcuts Column -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-header bg-white py-3 px-4 border-bottom">
+        <h6 class="fw-bold mb-0 text-slate-900">Lupon Tagapamayapa Shortcuts</h6>
+        <small class="text-muted">Judicial operations and dispute actions</small>
+      </div>
+      <div class="card-body p-3">
+        <div class="d-grid gap-3">
+          
+          <!-- Shortcut 1: Record New Blotter Case -->
+          <a href="#" class="quick-action-card p-3 rounded-3 text-decoration-none border d-flex align-items-center" onclick="openNewBlotterModal(); return false;">
+            <div class="feature-icon-wrapper icon-blue me-3 mb-0" style="width: 48px; height: 48px; font-size: 1.3rem;">
+              <i class="bi bi-journal-plus"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-dark">Record New Blotter Case</div>
+              <small class="text-muted">Encode resident complaint or incident report</small>
+            </div>
+          </a>
+
+          <!-- Shortcut 2: Lupon Hearing Scheduler -->
+          <a href="#" class="quick-action-card p-3 rounded-3 text-decoration-none border d-flex align-items-center" onclick="alert('Lupon Hearing Scheduler feature active.'); return false;">
+            <div class="feature-icon-wrapper icon-amber me-3 mb-0" style="width: 48px; height: 48px; font-size: 1.3rem;">
+              <i class="bi bi-calendar-event"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-dark">Lupon Hearing Scheduler</div>
+              <small class="text-muted">Schedule mediation conciliation proceedings</small>
+            </div>
+          </a>
+
+          <!-- Shortcut 3: Judicial Forms & Prints -->
+          <a href="#" class="quick-action-card p-3 rounded-3 text-decoration-none border d-flex align-items-center" onclick="alert('Judicial Forms printable templates portal active.'); return false;">
+            <div class="feature-icon-wrapper icon-emerald me-3 mb-0" style="width: 48px; height: 48px; font-size: 1.3rem;">
+              <i class="bi bi-file-earmark-pdf-fill"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-dark">Judicial Forms & Prints</div>
+              <small class="text-muted">Print Summons, Amicable Settlement, or Cert. to File Action</small>
+            </div>
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- RECORD NEW BLOTTER CASE MODAL -->
+<!-- ========================================== -->
+<div class="modal fade" id="newBlotterModal" tabindex="-1" aria-labelledby="newBlotterModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold" id="newBlotterModalLabel">
+          <i class="bi bi-journal-plus me-2"></i>Record New Blotter / Dispute Case
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="POST" action="{% url 'blotter_records' %}">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+          
+          <!-- Row 1: Case Number & Incident Type -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="case_number" class="form-label fw-semibold small text-dark">Case Number <span class="text-danger">*</span></label>
+              <input type="text" name="case_number" id="blotterCaseNumber" class="form-control" required value="{{ next_case_number|default:'BLT-2026-0001' }}">
+            </div>
+            <div class="col-md-6">
+              <label for="incident_type" class="form-label fw-semibold small text-dark">Incident Type <span class="text-danger">*</span></label>
+              <select name="incident_type" class="form-select" required>
+                <option value="Boundary Dispute">Boundary Dispute</option>
+                <option value="Noise Complaint">Noise Complaint</option>
+                <option value="Physical Injury">Physical Injury</option>
+                <option value="Property Damage">Property Damage</option>
+                <option value="Theft">Theft</option>
+                <option value="Verbal Altercation">Verbal Altercation</option>
+                <option value="Threats">Threats</option>
+                <option value="Other">Other Incident</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: Complainant Info -->
+          <div class="card bg-light border-0 p-3 mb-3">
+            <h6 class="fw-bold text-primary mb-2">Complainant Information (Ang Nagreklamo)</h6>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <input type="text" name="complainant_name" class="form-control" required placeholder="Full Name of Complainant">
+              </div>
+              <div class="col-md-6">
+                <input type="text" name="complainant_address" class="form-control" required placeholder="Purok / Address">
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Respondent Info -->
+          <div class="card bg-light border-0 p-3 mb-3">
+            <h6 class="fw-bold text-danger mb-2">Respondent Information (Ang Gireklamo)</h6>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <input type="text" name="respondent_name" class="form-control" required placeholder="Full Name of Respondent">
+              </div>
+              <div class="col-md-6">
+                <input type="text" name="respondent_address" class="form-control" required placeholder="Purok / Address">
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 4: Incident Location & Status -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="incident_location" class="form-label fw-semibold small text-dark">Incident Location</label>
+              <input type="text" name="incident_location" class="form-control" placeholder="e.g. Purok 1 Basketball Court">
+            </div>
+            <div class="col-md-6">
+              <label for="status" class="form-label fw-semibold small text-dark">Initial Status <span class="text-danger">*</span></label>
+              <select name="status" class="form-select" required>
+                <option value="Pending" selected>🔴 Pending Investigation</option>
+                <option value="Scheduled">🟡 Hearing Scheduled</option>
+                <option value="Settled">🟢 Settled (Amicable)</option>
+                <option value="Referred">🔵 Referred to Court</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 5: Complaint Details -->
+          <div class="mb-3">
+            <label for="details" class="form-label fw-semibold small text-dark">Incident Details & Narrative</label>
+            <textarea name="details" class="form-control" rows="3" placeholder="Brief summary of the complaint or dispute incident..."></textarea>
+          </div>
+
+        </div>
+
+        <div class="modal-footer bg-light px-4 py-3 border-top">
+          <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary fw-semibold px-4">
+            <i class="bi bi-check-circle me-1"></i> Save Blotter Record
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function openNewBlotterModal() {
+    const modalEl = document.getElementById('newBlotterModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  }
+</script>
+{% endblock %}

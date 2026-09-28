@@ -1,0 +1,316 @@
+{% extends 'profiling/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Households Masterlist Directory{% endblock %}
+{% block header_title %}Households Masterlist{% endblock %}
+
+{% block content %}
+<!-- Household Masterlist Header Banner -->
+<div class="card border-0 bg-primary text-white rounded-3 shadow-sm mb-4 overflow-hidden position-relative">
+  <div class="card-body p-4 position-relative z-1">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h4 class="fw-bold mb-1">
+          <i class="bi bi-houses-fill me-2"></i>Barangay Household Directory & Census
+        </h4>
+        <p class="mb-0 opacity-90 small">
+          Master directory of surveyed barangay family units. Group residents by household number, track heads of household, and manage family demographics per Purok.
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <a href="{% url 'resident_create' %}" class="btn btn-light fw-semibold text-primary px-3 py-2 rounded-2 shadow-sm">
+          <i class="bi bi-house-add me-1"></i> Record New Household
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 1. HOUSEHOLD METRIC CARDS -->
+<div class="row g-3 mb-4">
+  <!-- Total Households -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card" style="border-left: 4px solid #059669;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-secondary small fw-bold text-uppercase tracking-wider">Profiled Households</span>
+          <div class="stat-number mt-2 text-success">{{ total_households|default:0 }}</div>
+          <small class="text-muted">Registered family units</small>
+        </div>
+        <div class="feature-icon-wrapper icon-emerald mb-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-house-door-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Residents -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card" style="border-left: 4px solid #2563eb;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-secondary small fw-bold text-uppercase tracking-wider">Total Residents</span>
+          <div class="stat-number mt-2 text-primary">{{ total_residents|default:0 }}</div>
+          <small class="text-muted">Individual members</small>
+        </div>
+        <div class="feature-icon-wrapper icon-blue mb-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-people-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Avg Family Size -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card" style="border-left: 4px solid #d97706;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-secondary small fw-bold text-uppercase tracking-wider">Avg Family Size</span>
+          <div class="stat-number mt-2" style="color: #d97706;">{{ avg_family_size|default:"0.0" }}</div>
+          <small class="text-muted">Members per household</small>
+        </div>
+        <div class="feature-icon-wrapper icon-amber mb-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+          <i class="bi bi-person-badge-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Puroks Covered -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card" style="border-left: 4px solid #7c3aed;">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <span class="text-secondary small fw-bold text-uppercase tracking-wider">Puroks Covered</span>
+          <div class="stat-number mt-2" style="color: #7c3aed;">{{ total_puroks|default:0 }}</div>
+          <small class="text-muted">Barangay zones surveyed</small>
+        </div>
+        <div class="feature-icon-wrapper icon-indigo mb-0" style="width: 44px; height: 44px; font-size: 1.2rem; background-color: #f3e8ff; color: #7c3aed;">
+          <i class="bi bi-geo-alt-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. SEARCH & PUROK FILTER BAR -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+  <div class="card-body p-3">
+    <form method="GET" action="{% url 'households_masterlist' %}" class="row g-2 align-items-center">
+      <div class="col-md-6">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+          <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Search by Household No., Head of Family, or Resident Name..." value="{{ search_query|default:'' }}">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <select name="purok" class="form-select">
+          <option value="">All Puroks / Zones</option>
+          {% for p in purok_list %}
+            <option value="{{ p }}" {% if current_purok == p %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100 fw-semibold">
+          <i class="bi bi-funnel me-1"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 3. HOUSEHOLDS MASTERLIST TABLE -->
+<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+  <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+    <div>
+      <h6 class="fw-bold mb-0 text-slate-900">Surveyed Household Units</h6>
+      <small class="text-muted">Grouped by registered family household number</small>
+    </div>
+    <div class="badge bg-light text-dark border px-3 py-2">
+      Total Units: <strong>{{ households|length }}</strong>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-custom align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Household No.</th>
+            <th>Head of Household</th>
+            <th>Purok / Address</th>
+            <th>Family Size</th>
+            <th>Registered Members</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if households %}
+            {% for item in households %}
+            <tr>
+              <td>
+                <span class="fw-bold text-primary">{{ item.household_number }}</span>
+              </td>
+              <td>
+                <div class="fw-semibold text-dark">{{ item.head_name }}</div>
+                <small class="text-muted">Head of Family</small>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border"><i class="bi bi-geo-alt me-1"></i>{{ item.purok }}</span>
+              </td>
+              <td>
+                <span class="badge bg-success-subtle text-success border rounded-pill px-3 py-1">
+                  <i class="bi bi-people me-1"></i>{{ item.member_count }} Member{% if item.member_count > 1 %}s{% endif %}
+                </span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center flex-wrap gap-1">
+                  {% for m in item.members %}
+                    <span class="badge bg-white text-dark border" title="{{ m.relationship_to_head }}: {{ m.full_name }} (Age {{ m.age }})">
+                      {{ m.full_name }} <small class="text-muted">({{ m.relationship_to_head }})</small>
+                    </span>
+                  {% endfor %}
+                </div>
+              </td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-light btn-sm text-primary" title="View Family Members" onclick="viewHouseholdDetails('{{ item.household_number }}', '{{ item.head_name|escapejs }}')">
+                    <i class="bi bi-eye me-1"></i> View Family
+                  </button>
+                  <a href="{% url 'resident_create' %}?household_number={{ item.household_number }}&purok={{ item.purok|urlencode }}&household_head={{ item.head_name|urlencode }}" class="btn btn-light btn-sm text-success" title="Add Family Member">
+                    <i class="bi bi-person-plus me-1"></i> Add Member
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-5">
+                <div class="text-muted">
+                  <i class="bi bi-house-x fs-1 d-block mb-2 opacity-50"></i>
+                  <h6 class="fw-bold mb-1">No Household Units Found</h6>
+                  <p class="small mb-3">No family households match your search query or filter.</p>
+                  <a href="{% url 'resident_create' %}" class="btn btn-primary btn-sm px-3">
+                    <i class="bi bi-plus-circle me-1"></i> Record First Household
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- HOUSEHOLD FAMILY MEMBERS MODAL -->
+<!-- ========================================== -->
+<div class="modal fade" id="householdDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-house-door me-2"></i>Household Family Members
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <div class="bg-light p-3 rounded-3 border mb-3 d-flex justify-content-between align-items-center">
+          <div>
+            <div class="small text-muted text-uppercase fw-bold">Household Unit</div>
+            <div class="fw-bold text-primary fs-5" id="modalHhNumber">HH-0000</div>
+          </div>
+          <div class="text-end">
+            <div class="small text-muted text-uppercase fw-bold">Head of Household</div>
+            <div class="fw-bold text-dark fs-6" id="modalHhHead">Head Name</div>
+          </div>
+        </div>
+
+        <h6 class="fw-bold text-dark mb-3">Family Members Roster</h6>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Full Name</th>
+                <th>Relationship to Head</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Civil Status</th>
+                <th>Occupation</th>
+              </tr>
+            </thead>
+            <tbody id="modalMembersTableBody">
+              <!-- Dynamically populated via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-light px-4 py-3 border-top">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function viewHouseholdDetails(hhNumber, headName) {
+    document.getElementById('modalHhNumber').innerText = hhNumber;
+    document.getElementById('modalHhHead').innerText = headName;
+
+    const tbody = document.getElementById('modalMembersTableBody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading family members...</td></tr>';
+
+    const modal = new bootstrap.Modal(document.getElementById('householdDetailModal'));
+    modal.show();
+
+    // Fetch members dynamically via AJAX endpoint or filtered DOM query
+    fetch("{% url 'resident_list' %}?q=" + encodeURIComponent(hhNumber))
+      .then(response => response.text())
+      .then(html => {
+        // Simple client-side table population
+        fetchMembersForHousehold(hhNumber, tbody);
+      })
+      .catch(() => {
+        fetchMembersForHousehold(hhNumber, tbody);
+      });
+  }
+
+  function fetchMembersForHousehold(hhNumber, tbody) {
+    // Client side fallback data population from rendered table rows
+    tbody.innerHTML = '';
+    const rows = document.querySelectorAll('tbody tr');
+    let count = 0;
+    rows.forEach(row => {
+      const hhTd = row.querySelector('td:first-child');
+      if (hhTd && hhTd.innerText.trim() === hhNumber) {
+        const badges = row.querySelectorAll('td:nth-child(5) .badge');
+        badges.forEach(b => {
+          count++;
+          const text = b.innerText;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="fw-semibold text-dark">${text.split('(')[0].trim()}</td>
+            <td><span class="badge bg-primary-subtle text-primary border">${text.includes('(') ? text.split('(')[1].replace(')', '') : 'Member'}</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+            <td>Resident Profiled</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    });
+
+    if (count === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No member records found for this household.</td></tr>';
+    }
+  }
+</script>
+{% endblock %}

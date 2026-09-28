@@ -1,0 +1,183 @@
+{% extends 'profiling/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ title }} — Barangay Profiling{% endblock %}
+{% block header_title %}Household Profiling{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <!-- Header with Back Button -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <h4 class="fw-bold text-dark mb-1">{{ title }}</h4>
+        <p class="text-muted small mb-0">Record field survey profiling details for this household unit.</p>
+      </div>
+      <a href="{% url 'household_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Masterlist
+      </a>
+    </div>
+
+    <!-- Main Household Profiling Form -->
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-body p-4">
+        <form method="POST" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2">
+            {% for error in form.non_field_errors %}
+              <div><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ error }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Section 1: Household Identification -->
+          <div class="border-bottom pb-3 mb-4">
+            <h6 class="fw-bold text-primary mb-3">
+              <i class="bi bi-hash me-1"></i> 1. Household Identification & Location
+            </h6>
+            <div class="row g-3">
+              <!-- Household No -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Household ID / Number <span class="text-danger">*</span></label>
+                {{ form.household_number }}
+                {% if form.household_number.errors %}
+                  <div class="text-danger small mt-1">{{ form.household_number.errors.0 }}</div>
+                {% endif %}
+                <small class="text-muted" style="font-size: 0.72rem;">Unique identifier (e.g. HH-2026-001)</small>
+              </div>
+
+              <!-- Purok -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Purok <span class="text-danger">*</span></label>
+                {{ form.purok }}
+                {% if form.purok.errors %}
+                  <div class="text-danger small mt-1">{{ form.purok.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Household Status -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Household Status <span class="text-danger">*</span></label>
+                {{ form.household_status }}
+                {% if form.household_status.errors %}
+                  <div class="text-danger small mt-1">{{ form.household_status.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Complete Address -->
+              <div class="col-12">
+                <label class="form-label small fw-bold">Complete Address <span class="text-danger">*</span></label>
+                {{ form.complete_address }}
+                {% if form.complete_address.errors %}
+                  <div class="text-danger small mt-1">{{ form.complete_address.errors.0 }}</div>
+                {% endif %}
+                <small class="text-muted" style="font-size: 0.72rem;">Specific street, block/lot number, or landmark</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Family Head & Demographics -->
+          <div class="border-bottom pb-3 mb-4">
+            <h6 class="fw-bold text-primary mb-3">
+              <i class="bi bi-person-badge-fill me-1"></i> 2. Family Head & Household Size
+            </h6>
+            <div class="row g-3">
+              <!-- Head of Family -->
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Householder / Head of Family <span class="text-danger">*</span></label>
+                {{ form.head_name }}
+                {% if form.head_name.errors %}
+                  <div class="text-danger small mt-1">{{ form.head_name.errors.0 }}</div>
+                {% endif %}
+                <small class="text-muted" style="font-size: 0.72rem;">Full name of primary breadwinner / head of family</small>
+              </div>
+
+              <!-- Contact Number -->
+              <div class="col-md-3">
+                <label class="form-label small fw-bold">Contact Number</label>
+                {{ form.contact_number }}
+                {% if form.contact_number.errors %}
+                  <div class="text-danger small mt-1">{{ form.contact_number.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Total Household Members -->
+              <div class="col-md-3">
+                <label class="form-label small fw-bold">Declared Members Count <span class="text-danger">*</span></label>
+                {{ form.members_count }}
+                {% if form.members_count.errors %}
+                  <div class="text-danger small mt-1">{{ form.members_count.errors.0 }}</div>
+                {% endif %}
+                <small class="text-muted" style="font-size: 0.72rem;">Total individuals living in this unit</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Housing & Socio-Economic Profile -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-primary mb-3">
+              <i class="bi bi-house-check-fill me-1"></i> 3. Housing Characteristics & Utilities
+            </h6>
+            <div class="row g-3">
+              <!-- Type of House -->
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Type of House</label>
+                {{ form.house_type }}
+                {% if form.house_type.errors %}
+                  <div class="text-danger small mt-1">{{ form.house_type.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Housing Ownership -->
+              <div class="col-md-6">
+                <label class="form-label small fw-bold">Housing Ownership</label>
+                {{ form.housing_ownership }}
+                {% if form.housing_ownership.errors %}
+                  <div class="text-danger small mt-1">{{ form.housing_ownership.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Water Source -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Main Water Source</label>
+                {{ form.water_source }}
+                {% if form.water_source.errors %}
+                  <div class="text-danger small mt-1">{{ form.water_source.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Electricity Connection -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Electricity Connection</label>
+                {{ form.electricity }}
+                {% if form.electricity.errors %}
+                  <div class="text-danger small mt-1">{{ form.electricity.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Toilet Facility -->
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Toilet Facility</label>
+                {{ form.toilet_facility }}
+                {% if form.toilet_facility.errors %}
+                  <div class="text-danger small mt-1">{{ form.toilet_facility.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+            <a href="{% url 'household_list' %}" class="btn btn-light border px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4 fw-semibold">
+              <i class="bi bi-check-lg me-1"></i> Save Household Profile
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends 'profiling/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Admin Profile & Security{% endblock %}
+{% block header_title %}Administrator Profile{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Left Column: Profile Card & Information -->
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 text-center mb-4">
+      <div class="user-avatar-sm mx-auto mb-3 shadow" style="width: 80px; height: 80px; font-size: 2.2rem; border-radius: 20px;">
+        {{ request.user.username|make_list|first|upper }}
+      </div>
+      <h5 class="fw-bold text-slate-900 mb-1">{{ request.user.get_full_name|default:request.user.username }}</h5>
+      <p class="text-primary small fw-semibold mb-3">@{{ request.user.username }} &bull; Barangay Admin</p>
+      
+      <div class="p-3 bg-light rounded-3 text-start small border mb-3">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Account Status:</span>
+          <span class="badge bg-success-subtle text-success">Active &bull; Superuser</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Date Joined:</span>
+          <span class="fw-semibold text-slate-800">{{ request.user.date_joined|date:"M d, Y" }}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-muted">Last Login:</span>
+          <span class="fw-semibold text-slate-800">{{ request.user.last_login|date:"M d, Y h:i A"|default:"First Session" }}</span>
+        </div>
+      </div>
+
+      <a href="{% url 'admin_logout' %}" class="btn btn-outline-danger btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-1">
+        <i class="bi bi-box-arrow-left"></i>
+        <span>Logout Session</span>
+      </a>
+    </div>
+
+    <!-- Security Info Box -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
+      <h6 class="fw-bold text-slate-900 mb-2"><i class="bi bi-shield-check text-success me-2"></i>Django Auth Security</h6>
+      <p class="small text-muted mb-0">
+        All administrator credentials and passwords are encrypted using Django's PBKDF2 algorithm with a SHA256 hash. Sessions automatically expire upon logout.
+      </p>
+    </div>
+  </div>
+
+  <!-- Right Column: Profile Edit & Change Password Tabs -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      
+      <!-- Nav Tabs -->
+      <div class="card-header bg-white border-bottom pt-3 px-4 pb-0">
+        <ul class="nav nav-tabs border-0" id="profileTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold text-slate-800 border-0 border-bottom border-3 border-primary pb-3" id="info-tab" data-bs-toggle="tab" data-bs-target="#infoPane" type="button" role="tab">
+              <i class="bi bi-person-fill me-1"></i> Edit Profile Info
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold text-slate-800 border-0 pb-3" id="password-tab" data-bs-toggle="tab" data-bs-target="#passwordPane" type="button" role="tab">
+              <i class="bi bi-key-fill me-1"></i> Change Password
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-body p-4 p-md-5">
+        <div class="tab-content" id="profileTabsContent">
+          
+          <!-- Pane 1: Edit Profile Info -->
+          <div class="tab-pane fade show active" id="infoPane" role="tabpanel">
+            <h6 class="fw-bold text-slate-900 mb-3">Update Basic Information</h6>
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_profile">
+
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-slate-700">Username</label>
+                  <input type="text" class="form-control bg-light" value="{{ request.user.username }}" disabled readonly>
+                  <small class="text-muted">Username cannot be changed directly.</small>
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ profile_form.email.id_for_label }}" class="form-label small fw-bold text-slate-700">Email Address</label>
+                  {{ profile_form.email }}
+                  {% if profile_form.email.errors %}
+                    <div class="text-danger small mt-1">{{ profile_form.email.errors.0 }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ profile_form.first_name.id_for_label }}" class="form-label small fw-bold text-slate-700">First Name</label>
+                  {{ profile_form.first_name }}
+                  {% if profile_form.first_name.errors %}
+                    <div class="text-danger small mt-1">{{ profile_form.first_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ profile_form.last_name.id_for_label }}" class="form-label small fw-bold text-slate-700">Last Name</label>
+                  {{ profile_form.last_name }}
+                  {% if profile_form.last_name.errors %}
+                    <div class="text-danger small mt-1">{{ profile_form.last_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                  <i class="bi bi-save me-1"></i> Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Pane 2: Change Password -->
+          <div class="tab-pane fade" id="passwordPane" role="tabpanel">
+            <h6 class="fw-bold text-slate-900 mb-3">Change Administrator Password</h6>
+            
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="change_password">
+
+              {% if password_form.non_field_errors %}
+                <div class="alert alert-danger shadow-sm border-0 mb-3">
+                  {% for error in password_form.non_field_errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+
+              <div class="mb-3">
+                <label for="{{ password_form.old_password.id_for_label }}" class="form-label small fw-bold text-slate-700">Current Password</label>
+                <div class="input-group">
+                  {{ password_form.old_password }}
+                  <button type="button" class="btn btn-outline-secondary bg-white toggle-password-btn" data-target="{{ password_form.old_password.id_for_label }}">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+                {% if password_form.old_password.errors %}
+                  <div class="text-danger small mt-1">{{ password_form.old_password.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ password_form.new_password1.id_for_label }}" class="form-label small fw-bold text-slate-700">New Password</label>
+                <div class="input-group">
+                  {{ password_form.new_password1 }}
+                  <button type="button" class="btn btn-outline-secondary bg-white toggle-password-btn" data-target="{{ password_form.new_password1.id_for_label }}">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+                {% if password_form.new_password1.errors %}
+                  <div class="text-danger small mt-1">{{ password_form.new_password1.errors.0 }}</div>
+                {% endif %}
+                <small class="text-muted">Must be at least 8 characters long and not entirely numeric.</small>
+              </div>
+
+              <div class="mb-4">
+                <label for="{{ password_form.new_password2.id_for_label }}" class="form-label small fw-bold text-slate-700">Confirm New Password</label>
+                <div class="input-group">
+                  {{ password_form.new_password2 }}
+                  <button type="button" class="btn btn-outline-secondary bg-white toggle-password-btn" data-target="{{ password_form.new_password2.id_for_label }}">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+                {% if password_form.new_password2.errors %}
+                  <div class="text-danger small mt-1">{{ password_form.new_password2.errors.0 }}</div>
+                {% endif %}
+              </div>
+
+              <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                  <i class="bi bi-key me-1"></i> Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Add Bootstrap styling to Password form inputs
+  document.querySelectorAll('#passwordPane input').forEach(input => {
+    input.classList.add('form-control');
+  });
+</script>
+{% endblock %}

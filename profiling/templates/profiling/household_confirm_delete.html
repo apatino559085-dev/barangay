@@ -1,0 +1,33 @@
+{% extends 'profiling/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Confirm Delete Household — Barangay Profiling{% endblock %}
+{% block header_title %}Delete Household Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-body p-4 text-center">
+        <div class="text-danger mb-3">
+          <i class="bi bi-exclamation-triangle-fill display-4"></i>
+        </div>
+        <h5 class="fw-bold text-dark mb-2">Delete Household #{{ household.household_number }}?</h5>
+        <p class="text-muted small mb-4">
+          Are you sure you want to permanently delete household <strong>{{ household.head_name }}</strong> ({{ household.purok }})?
+          All <strong>{{ household.residents.count }}</strong> resident records associated with this household will also be permanently deleted.
+        </p>
+        <form method="POST">
+          {% csrf_token %}
+          <div class="d-flex justify-content-center gap-2">
+            <a href="{% url 'household_detail' household.pk %}" class="btn btn-light border px-4">Cancel</a>
+            <button type="submit" class="btn btn-danger px-4 fw-semibold">
+              <i class="bi bi-trash me-1"></i> Yes, Delete Household
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

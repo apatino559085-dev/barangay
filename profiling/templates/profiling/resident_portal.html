@@ -1,0 +1,407 @@
+{% extends 'profiling/base_public.html' %}
+{% load static %}
+
+{% block title %}Resident Portal — Barangay Profiling System{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    background-color: #0f172a !important;
+    color: #f8fafc;
+  }
+  .portal-hero-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 1.25rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  }
+  .announcement-card {
+    transition: all 0.25s ease;
+    border-radius: 0.85rem;
+    border: 1px solid #e2e8f0;
+  }
+  .announcement-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  .btn-gradient-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 0.6rem;
+    padding: 0.6rem 1.25rem;
+    box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.4);
+    transition: all 0.2s ease;
+  }
+  .btn-gradient-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px -4px rgba(37, 99, 235, 0.5);
+    color: #fff;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4 my-md-3">
+  
+  <!-- Sleek Resident Hero Banner -->
+  <div class="portal-hero-card p-4 p-md-5 mb-4 position-relative overflow-hidden">
+    <div class="row align-items-center">
+      <div class="col-lg-7 mb-3 mb-lg-0">
+        <div class="d-flex align-items-center">
+          <div class="rounded-circle bg-primary bg-gradient text-white fw-bold d-flex align-items-center justify-content-center me-3 shadow flex-shrink-0" style="width: 64px; height: 64px; font-size: 1.6rem; border: 3px solid rgba(255,255,255,0.2);">
+            {{ resident.full_name|default:request.user.username|make_list|first|upper }}
+          </div>
+          <div>
+            <div class="mb-1">
+              <span class="badge bg-primary bg-opacity-20 text-info border border-info border-opacity-20 px-3 py-1 rounded-pill small">
+                <i class="bi bi-patch-check-fill me-1"></i>Verified Resident Profile
+              </span>
+            </div>
+            <h3 class="fw-bold text-white mb-1">
+              Welcome, {{ resident.full_name|default:request.user.username }}
+            </h3>
+            <p class="text-secondary small mb-0">
+              <i class="bi bi-geo-alt-fill text-primary me-1"></i>{{ resident.purok|default:"Barangay Resident" }} &nbsp;•&nbsp; 
+              <i class="bi bi-house-door-fill text-primary me-1"></i>Household No: <strong>{{ resident.household_number|default:"N/A" }}</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5 text-lg-end">
+        <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+          <button type="button" class="btn btn-gradient-primary shadow-sm" onclick="openCertRequestModal()">
+            <i class="bi bi-file-earmark-plus me-1.5"></i> Request Certificate
+          </button>
+          <button type="button" class="btn btn-outline-light px-3 rounded-3" onclick="openConcernModal()">
+            <i class="bi bi-megaphone me-1.5"></i> Submit Concern
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- SECTION 1: BARANGAY OFFICIAL ANNOUNCEMENTS -->
+  <div class="glass-card overflow-hidden mb-4">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <div>
+        <h6 class="fw-bold mb-0 text-slate-900"><i class="bi bi-megaphone-fill text-primary me-2"></i>Barangay Official Advisories & Announcements</h6>
+        <small class="text-muted">Public community notices and official news</small>
+      </div>
+      <span class="badge bg-primary-subtle text-primary border px-3 py-1.5 rounded-pill fw-semibold">Community Feed</span>
+    </div>
+    <div class="card-body p-4 text-dark">
+      {% if announcements %}
+        <div class="row g-3">
+          {% for item in announcements %}
+          <div class="col-md-6">
+            <div class="card announcement-card h-100 bg-light">
+              <div class="card-body p-3.5">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-primary text-white rounded-pill px-2.5 py-1">{{ item.category }}</span>
+                  <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ item.date_posted|date:"M d, Y" }}</small>
+                </div>
+                <h6 class="fw-bold text-dark mb-2">{{ item.title }}</h6>
+                <p class="card-text text-secondary small mb-0" style="line-height: 1.6;">{{ item.content }}</p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bg-light p-4 rounded-3 text-center text-muted">
+          <i class="bi bi-info-circle fs-3 d-block mb-2 text-primary opacity-50"></i>
+          <span class="fw-semibold small">No announcements posted at this time. Check back soon!</span>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4 text-dark">
+    <!-- SECTION 2: CERTIFICATE REQUESTS TRACKING -->
+    <div class="col-lg-7">
+      <div class="glass-card overflow-hidden h-100">
+        <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+          <div>
+            <h6 class="fw-bold mb-0 text-slate-900"><i class="bi bi-file-earmark-check-fill text-success me-2"></i>My Certificate Requests</h6>
+            <small class="text-muted">Status of requested Barangay Clearances & Certificates</small>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary px-3 rounded-2 fw-semibold" onclick="openCertRequestModal()">
+            <i class="bi bi-plus-circle me-1"></i> Request New
+          </button>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light small">
+                <tr>
+                  <th>Document Type</th>
+                  <th>Purpose</th>
+                  <th>Date Requested</th>
+                  <th>Approval Status</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if my_documents %}
+                  {% for doc in my_documents %}
+                  <tr>
+                    <td class="fw-bold text-dark">{{ doc.document_type }}</td>
+                    <td class="small text-muted">{{ doc.purpose }}</td>
+                    <td class="small text-muted">{{ doc.date_issued|date:"M d, Y" }}</td>
+                    <td>
+                      {% if doc.status == 'Pending' %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1 rounded-pill small">
+                          🟡 Pending Approval
+                        </span>
+                      {% elif doc.status == 'Approved' %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill small">
+                          🟢 Approved (Ready)
+                        </span>
+                      {% elif doc.status == 'Rejected' %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 rounded-pill small">
+                          🔴 Rejected
+                        </span>
+                      {% else %}
+                        <span class="badge bg-info-subtle text-info border border-info-subtle px-2.5 py-1 rounded-pill small">
+                          🔵 Completed
+                        </span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      {% if doc.status == 'Approved' or doc.status == 'Completed' %}
+                        <a href="{% url 'generate_document_pdf' %}?or_number={{ doc.or_number }}" target="_blank" class="btn btn-sm btn-success px-2.5 py-1 fw-semibold">
+                          <i class="bi bi-printer me-1"></i> View / Print
+                        </a>
+                      {% else %}
+                        <span class="small text-muted">Awaiting Admin</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="5" class="text-center py-5">
+                      <div class="text-muted">
+                        <i class="bi bi-file-earmark-x fs-2 d-block mb-2 opacity-50"></i>
+                        <h6 class="fw-bold mb-1 text-dark">No Certificate Requests Submitted</h6>
+                        <p class="small mb-3">You have not submitted any certificate requests yet.</p>
+                        <button type="button" class="btn btn-sm btn-primary px-3 rounded-2" onclick="openCertRequestModal()">
+                          <i class="bi bi-plus-circle me-1"></i> Request Certificate Now
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: MY CONCERNS & INCIDENT REPORTS -->
+    <div class="col-lg-5">
+      <div class="glass-card overflow-hidden h-100">
+        <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+          <div>
+            <h6 class="fw-bold mb-0 text-slate-900"><i class="bi bi-chat-left-dots-fill text-warning me-2"></i>My Concerns & Reports</h6>
+            <small class="text-muted">Community feedback & incident logs</small>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary px-3 rounded-2 fw-semibold" onclick="openConcernModal()">
+            <i class="bi bi-plus-circle me-1"></i> Submit Report
+          </button>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light small">
+                <tr>
+                  <th>Subject</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if my_concerns %}
+                  {% for item in my_concerns %}
+                  <tr>
+                    <td>
+                      <div class="fw-bold text-dark small">{{ item.subject }}</div>
+                      <small class="text-muted d-block text-truncate" style="max-width: 170px;">{{ item.description }}</small>
+                    </td>
+                    <td><span class="badge bg-light text-dark border small">{{ item.category }}</span></td>
+                    <td>
+                      {% if item.status == 'Pending' %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border px-2 py-1 small rounded-pill">🟡 Pending</span>
+                      {% elif item.status == 'In Progress' %}
+                        <span class="badge bg-info-subtle text-info border px-2 py-1 small rounded-pill">🔵 In Progress</span>
+                      {% elif item.status == 'Resolved' %}
+                        <span class="badge bg-success-subtle text-success border px-2 py-1 small rounded-pill">🟢 Resolved</span>
+                      {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small rounded-pill">Dismissed</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="3" class="text-center py-5">
+                      <div class="text-muted">
+                        <i class="bi bi-chat-square-text fs-2 d-block mb-2 opacity-50"></i>
+                        <h6 class="fw-bold mb-1 text-dark">No Concerns Submitted</h6>
+                        <p class="small mb-3">No incident reports submitted yet.</p>
+                        <button type="button" class="btn btn-sm btn-outline-primary px-3 rounded-2" onclick="openConcernModal()">
+                          <i class="bi bi-plus-circle me-1"></i> Submit Report Now
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL 1: REQUEST CERTIFICATE MODAL -->
+<div class="modal fade" id="requestCertificateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-file-earmark-plus me-2"></i>Request Barangay Certificate
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="POST" action="{% url 'resident_request_certificate' %}">
+        {% csrf_token %}
+        <div class="modal-body p-4 text-dark">
+          
+          <div class="bg-light p-3 rounded-3 border mb-3">
+            <div class="small text-muted text-uppercase fw-bold">Requesting Resident</div>
+            <div class="fw-bold text-dark fs-6">{{ resident.full_name|default:request.user.username }}</div>
+            <div class="small text-muted">{{ resident.purok|default:"Resident Profile" }}</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="document_type" class="form-label fw-semibold small text-dark">Certificate Type <span class="text-danger">*</span></label>
+            <select name="document_type" class="form-select" required>
+              <option value="Clearance">Barangay Clearance</option>
+              <option value="Indigency">Certificate of Indigency</option>
+              <option value="Residency">Certificate of Residency</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="purpose" class="form-label fw-semibold small text-dark">Purpose <span class="text-danger">*</span></label>
+            <input type="text" name="purpose" class="form-control" required placeholder="e.g. Local Employment, Scholarship, Financial Assistance">
+          </div>
+
+          <div class="alert alert-info py-2 small mb-0 rounded-3">
+            <i class="bi bi-info-circle-fill me-1"></i> Your request will be submitted to Barangay Staff for approval before certificate issuance.
+          </div>
+
+        </div>
+
+        <div class="modal-footer bg-light px-4 py-3 border-top">
+          <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary fw-semibold px-4">
+            <i class="bi bi-send me-1"></i> Submit Request
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2: SUBMIT CONCERN MODAL -->
+<div class="modal fade" id="submitConcernModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-megaphone me-2"></i>Submit Concern or Incident Report
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="POST" action="{% url 'resident_submit_concern' %}">
+        {% csrf_token %}
+        <div class="modal-body p-4 text-dark">
+          
+          <div class="mb-3">
+            <label for="subject" class="form-label fw-semibold small text-dark">Subject <span class="text-danger">*</span></label>
+            <input type="text" name="subject" class="form-control" required placeholder="Brief title of your report or concern">
+          </div>
+
+          <div class="mb-3">
+            <label for="category" class="form-label fw-semibold small text-dark">Category <span class="text-danger">*</span></label>
+            <select name="category" class="form-select" required>
+              <option value="General Concern">General Concern</option>
+              <option value="Street Light Maintenance">Street Light Maintenance</option>
+              <option value="Garbage & Sanitation">Garbage & Sanitation</option>
+              <option value="Noise Complaint">Noise Complaint</option>
+              <option value="Drainage / Flood">Drainage / Flood</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label fw-semibold small text-dark">Detailed Description <span class="text-danger">*</span></label>
+            <textarea name="description" class="form-control" rows="4" required placeholder="Provide details of your concern or incident..."></textarea>
+          </div>
+
+        </div>
+
+        <div class="modal-footer bg-light px-4 py-3 border-top">
+          <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary fw-semibold px-4">
+            <i class="bi bi-send me-1"></i> Submit Concern
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function openCertRequestModal() {
+    const modal = new bootstrap.Modal(document.getElementById('requestCertificateModal'));
+    modal.show();
+  }
+
+  function openConcernModal() {
+    const modal = new bootstrap.Modal(document.getElementById('submitConcernModal'));
+    modal.show();
+  }
+</script>
+{% endblock %}

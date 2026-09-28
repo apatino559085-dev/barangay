@@ -1,0 +1,306 @@
+{% extends 'profiling/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Profiling Reports & Analytics — Barangay Profiling{% endblock %}
+{% block header_title %}Reports & Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  body { background-color: #fff !important; }
+  .sidebar, .topbar, .btn, .no-print { display: none !important; }
+  .main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
+  .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+  .print-header { display: block !important; }
+}
+.print-header { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Print Header (Visible only when printed) -->
+<div class="print-header mb-4 text-center border-bottom pb-3">
+  <h4 class="fw-bold mb-0">REPUBLIC OF THE PHILIPPINES</h4>
+  <h5 class="fw-bold mb-1">BARANGAY DEMOGRAPHIC & HOUSEHOLD PROFILING REPORT</h5>
+  <p class="text-muted small mb-0">Generated on {{ today }}</p>
+</div>
+
+<!-- Screen Header & Actions -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 no-print">
+  <div>
+    <h4 class="fw-bold mb-1 text-dark">Barangay Profiling Reports</h4>
+    <p class="text-muted small mb-0">Official demographic summaries, purok population distribution, and housing statistics.</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-printer"></i> Print Report
+    </button>
+    <a href="{% url 'export_households_csv' %}" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-file-earmark-spreadsheet"></i> Export Households CSV
+    </a>
+    <a href="{% url 'export_residents_csv' %}" class="btn btn-success btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-people-fill"></i> Export Residents CSV
+    </a>
+  </div>
+</div>
+
+<!-- 1. Executive Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-md-3">
+    <div class="card border-0 shadow-sm rounded-3 p-3">
+      <span class="text-muted small fw-bold text-uppercase">Total Profiled Households</span>
+      <div class="fs-3 fw-bold text-primary mt-1">{{ total_households }}</div>
+      <small class="text-success"><i class="bi bi-check-circle"></i> {{ verified_households }} Verified Profiles</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-3">
+    <div class="card border-0 shadow-sm rounded-3 p-3">
+      <span class="text-muted small fw-bold text-uppercase">Total Resident Population</span>
+      <div class="fs-3 fw-bold text-dark mt-1">{{ total_residents }}</div>
+      <small class="text-muted">Recorded individuals</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-3">
+    <div class="card border-0 shadow-sm rounded-3 p-3">
+      <span class="text-muted small fw-bold text-uppercase">Male Population</span>
+      <div class="fs-3 fw-bold text-info mt-1">{{ male_count }}</div>
+      <small class="text-muted">{{ male_pct }}% of total population</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-3">
+    <div class="card border-0 shadow-sm rounded-3 p-3">
+      <span class="text-muted small fw-bold text-uppercase">Female Population</span>
+      <div class="fs-3 fw-bold text-danger mt-1">{{ female_count }}</div>
+      <small class="text-muted">{{ female_pct }}% of total population</small>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Population & Households by Purok Table -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="fw-bold mb-0 text-dark">
+      <i class="bi bi-geo-alt-fill text-primary me-2"></i>Population & Households by Purok
+    </h6>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small text-uppercase text-muted border-bottom">
+          <tr>
+            <th class="ps-3">Purok Area</th>
+            <th class="text-center">Households</th>
+            <th class="text-center">Total Residents</th>
+            <th class="text-center">Male</th>
+            <th class="text-center">Female</th>
+            <th class="text-center">Population Share</th>
+            <th class="pe-3" style="width: 200px;">Distribution Bar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in purok_breakdown %}
+          <tr>
+            <td class="ps-3 fw-bold text-dark">{{ p.purok }}</td>
+            <td class="text-center fw-bold">{{ p.households }}</td>
+            <td class="text-center fw-bold text-primary">{{ p.residents }}</td>
+            <td class="text-center text-muted">{{ p.males }}</td>
+            <td class="text-center text-muted">{{ p.females }}</td>
+            <td class="text-center fw-semibold">{{ p.percent }}%</td>
+            <td class="pe-3">
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ p.percent }}%;" aria-valuenow="{{ p.percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">No purok data recorded yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Age Group & Household Size Distribution -->
+<div class="row g-4 mb-4">
+  <!-- Age Group Distribution -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm rounded-3 h-100">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-person-lines-fill text-primary me-2"></i>Age Group Distribution
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small fw-bold mb-1">
+            <span>Children (0 - 14 yrs)</span>
+            <span>{{ children_count }}</span>
+          </div>
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar bg-warning" style="width: {% widthratio children_count total_residents 100 %}%;"></div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small fw-bold mb-1">
+            <span>Youth (15 - 24 yrs)</span>
+            <span>{{ youth_count }}</span>
+          </div>
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar bg-info" style="width: {% widthratio youth_count total_residents 100 %}%;"></div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small fw-bold mb-1">
+            <span>Working Adults (25 - 59 yrs)</span>
+            <span>{{ adults_count }}</span>
+          </div>
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar bg-primary" style="width: {% widthratio adults_count total_residents 100 %}%;"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="d-flex justify-content-between small fw-bold mb-1">
+            <span>Senior Citizens (60+ yrs)</span>
+            <span>{{ seniors_count }}</span>
+          </div>
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar bg-success" style="width: {% widthratio seniors_count total_residents 100 %}%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Number of Residents per Household Size -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm rounded-3 h-100">
+      <div class="card-header bg-white border-bottom py-3">
+        <h6 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-house-door text-primary me-2"></i>Household Size Breakdown
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        <div class="row text-center g-3">
+          <div class="col-4">
+            <div class="bg-light p-3 rounded-2 border">
+              <span class="text-muted small d-block">Small (1-3)</span>
+              <span class="fs-4 fw-bold text-dark">{{ small_hh }}</span>
+              <span class="d-block small text-muted">Households</span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="bg-light p-3 rounded-2 border">
+              <span class="text-muted small d-block">Medium (4-6)</span>
+              <span class="fs-4 fw-bold text-primary">{{ medium_hh }}</span>
+              <span class="d-block small text-muted">Households</span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="bg-light p-3 rounded-2 border">
+              <span class="text-muted small d-block">Large (7+)</span>
+              <span class="fs-4 fw-bold text-danger">{{ large_hh }}</span>
+              <span class="d-block small text-muted">Households</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Household Summary (Housing, Water, Electricity, Sanitation) -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="fw-bold mb-0 text-dark">
+      <i class="bi bi-ui-checks-grid text-primary me-2"></i>Household Characteristics & Amenities Summary
+    </h6>
+  </div>
+  <div class="card-body p-4">
+    <div class="row g-4">
+      <!-- House Type -->
+      <div class="col-md-4">
+        <h6 class="small fw-bold text-uppercase text-muted border-bottom pb-1 mb-2">Type of House</h6>
+        <ul class="list-unstyled mb-0 small">
+          {% for item in house_type_stats %}
+          <li class="d-flex justify-content-between py-1 border-bottom border-light">
+            <span>{{ item.house_type }}</span>
+            <strong class="text-primary">{{ item.count }}</strong>
+          </li>
+          {% empty %}
+          <li class="text-muted">No records</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Housing Ownership -->
+      <div class="col-md-4">
+        <h6 class="small fw-bold text-uppercase text-muted border-bottom pb-1 mb-2">Housing Ownership</h6>
+        <ul class="list-unstyled mb-0 small">
+          {% for item in ownership_stats %}
+          <li class="d-flex justify-content-between py-1 border-bottom border-light">
+            <span>{{ item.housing_ownership }}</span>
+            <strong class="text-primary">{{ item.count }}</strong>
+          </li>
+          {% empty %}
+          <li class="text-muted">No records</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Water Source -->
+      <div class="col-md-4">
+        <h6 class="small fw-bold text-uppercase text-muted border-bottom pb-1 mb-2">Water Source</h6>
+        <ul class="list-unstyled mb-0 small">
+          {% for item in water_stats %}
+          <li class="d-flex justify-content-between py-1 border-bottom border-light">
+            <span>{{ item.water_source }}</span>
+            <strong class="text-primary">{{ item.count }}</strong>
+          </li>
+          {% empty %}
+          <li class="text-muted">No records</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Electricity -->
+      <div class="col-md-6">
+        <h6 class="small fw-bold text-uppercase text-muted border-bottom pb-1 mb-2">Electricity Connection</h6>
+        <ul class="list-unstyled mb-0 small">
+          {% for item in electricity_stats %}
+          <li class="d-flex justify-content-between py-1 border-bottom border-light">
+            <span>{{ item.electricity }}</span>
+            <strong class="text-primary">{{ item.count }}</strong>
+          </li>
+          {% empty %}
+          <li class="text-muted">No records</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Toilet Facility -->
+      <div class="col-md-6">
+        <h6 class="small fw-bold text-uppercase text-muted border-bottom pb-1 mb-2">Toilet Facility</h6>
+        <ul class="list-unstyled mb-0 small">
+          {% for item in toilet_stats %}
+          <li class="d-flex justify-content-between py-1 border-bottom border-light">
+            <span>{{ item.toilet_facility }}</span>
+            <strong class="text-primary">{{ item.count }}</strong>
+          </li>
+          {% empty %}
+          <li class="text-muted">No records</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

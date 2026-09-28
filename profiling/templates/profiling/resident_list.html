@@ -1,0 +1,256 @@
+{% extends 'profiling/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Resident Masterlist — Barangay Profiling{% endblock %}
+{% block header_title %}Resident Masterlist{% endblock %}
+
+{% block content %}
+<!-- Top Header & Actions -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold mb-1 text-dark">Resident Masterlist</h4>
+    <p class="text-muted small mb-0">Master directory of all registered residents belonging to profiled households.</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'export_residents_csv' %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-file-earmark-arrow-down"></i> Export CSV
+    </a>
+    <a href="{% url 'resident_create' %}" class="btn btn-primary btn-sm d-flex align-items-center gap-1 fw-semibold">
+      <i class="bi bi-person-plus-fill"></i> Add Resident
+    </a>
+  </div>
+</div>
+
+<!-- Search & Multifaceted Filtering Bar -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+  <div class="card-body p-3">
+    <form method="GET" class="row g-2 align-items-center">
+      <!-- Search Input -->
+      <div class="col-md-3">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" class="form-control" placeholder="Search name, ID, household, purok..." value="{{ query }}">
+        </div>
+      </div>
+
+      <!-- Purok Filter -->
+      <div class="col-sm-6 col-md-2">
+        <select name="purok" class="form-select form-select-sm">
+          <option value="">All Puroks</option>
+          {% for code, label in purok_choices %}
+          <option value="{{ code }}" {% if purok_filter == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Sex Filter -->
+      <div class="col-sm-6 col-md-1">
+        <select name="sex" class="form-select form-select-sm">
+          <option value="">Sex</option>
+          <option value="Male" {% if sex_filter == 'Male' %}selected{% endif %}>Male</option>
+          <option value="Female" {% if sex_filter == 'Female' %}selected{% endif %}>Female</option>
+        </select>
+      </div>
+
+      <!-- Age Group Filter -->
+      <div class="col-sm-6 col-md-2">
+        <select name="age_group" class="form-select form-select-sm">
+          <option value="">All Age Groups</option>
+          <option value="children" {% if age_group == 'children' %}selected{% endif %}>Children (0-14)</option>
+          <option value="youth" {% if age_group == 'youth' %}selected{% endif %}>Youth (15-24)</option>
+          <option value="adults" {% if age_group == 'adults' %}selected{% endif %}>Adults (25-59)</option>
+          <option value="seniors" {% if age_group == 'seniors' %}selected{% endif %}>Seniors (60+)</option>
+        </select>
+      </div>
+
+      <!-- Civil Status Filter -->
+      <div class="col-sm-6 col-md-2">
+        <select name="civil_status" class="form-select form-select-sm">
+          <option value="">Civil Status</option>
+          {% for code, label in civil_choices %}
+          <option value="{{ code }}" {% if civil_filter == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Verification Status Filter -->
+      <div class="col-sm-6 col-md-1">
+        <select name="verification" class="form-select form-select-sm">
+          <option value="">Status</option>
+          <option value="Approved" {% if verification_filter == 'Approved' %}selected{% endif %}>Approved</option>
+          <option value="Pending" {% if verification_filter == 'Pending' %}selected{% endif %}>Pending</option>
+          <option value="Draft" {% if verification_filter == 'Draft' %}selected{% endif %}>Draft</option>
+        </select>
+      </div>
+
+      <!-- Filter / Reset -->
+      <div class="col-sm-6 col-md-1 d-flex gap-1">
+        <button type="submit" class="btn btn-sm btn-primary w-100" title="Apply Filters">Filter</button>
+        {% if query or purok_filter or sex_filter or age_group or civil_filter or verification_filter %}
+        <a href="{% url 'resident_list' %}" class="btn btn-sm btn-outline-secondary" title="Clear Filters"><i class="bi bi-x"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Resident Masterlist Table -->
+<div class="card border-0 shadow-sm rounded-3">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small text-uppercase text-muted border-bottom">
+          <tr>
+            <th class="ps-3">Resident ID</th>
+            <th>Full Name</th>
+            <th class="text-center">Age</th>
+            <th class="text-center">Sex</th>
+            <th>Civil Status</th>
+            <th>Household No.</th>
+            <th>Purok</th>
+            <th>Occupation</th>
+            <th>Status</th>
+            <th class="pe-3 text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in page_obj %}
+          <tr>
+            <!-- Resident ID -->
+            <td class="ps-3 fw-bold text-primary font-monospace">{{ r.formatted_id }}</td>
+
+            <!-- Full Name -->
+            <td class="fw-semibold text-dark">
+              <a href="{% url 'resident_detail' r.pk %}" class="text-decoration-none text-dark">
+                {{ r.full_name }}
+              </a>
+              {% if r.relationship_to_head == 'Head' %}
+              <span class="badge bg-primary text-white ms-1" style="font-size: 0.65rem;">HEAD</span>
+              {% else %}
+              <span class="text-muted small ms-1" style="font-size: 0.72rem;">({{ r.relationship_to_head }})</span>
+              {% endif %}
+            </td>
+
+            <!-- Age -->
+            <td class="text-center">
+              <span class="fw-bold">{{ r.age }}</span>
+            </td>
+
+            <!-- Sex -->
+            <td class="text-center">
+              {% if r.sex == 'Male' %}
+              <span class="badge bg-info bg-opacity-10 text-info fw-bold">M</span>
+              {% else %}
+              <span class="badge bg-danger bg-opacity-10 text-danger fw-bold">F</span>
+              {% endif %}
+            </td>
+
+            <!-- Civil Status -->
+            <td class="text-muted small">{{ r.civil_status }}</td>
+
+            <!-- Household No. -->
+            <td>
+              {% if r.household %}
+              <a href="{% url 'household_detail' r.household.pk %}" class="badge bg-light text-primary border text-decoration-none">
+                <i class="bi bi-house-door me-1"></i>{{ r.household.household_number }}
+              </a>
+              {% else %}
+              <span class="text-muted small">{{ r.household_number|default:"None" }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Purok -->
+            <td>
+              <span class="badge bg-light text-dark border">
+                {{ r.household.purok|default:r.purok|default:"N/A" }}
+              </span>
+            </td>
+
+            <!-- Occupation -->
+            <td class="text-muted small">{{ r.occupation|default:"N/A" }}</td>
+
+            <!-- Status -->
+            <td>
+              {% if r.household %}
+              <span class="badge bg-{{ r.household.status_badge_class }} rounded-pill small">
+                {{ r.household.verification_status }}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary rounded-pill small">{{ r.residency_status }}</span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td class="pe-3 text-end">
+              <div class="btn-group btn-group-sm">
+                <a href="{% url 'resident_detail' r.pk %}" class="btn btn-outline-primary" title="View Resident">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'resident_update' r.pk %}" class="btn btn-outline-secondary" title="Edit Resident">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                {% if is_admin %}
+                <a href="{% url 'resident_delete' r.pk %}" class="btn btn-outline-danger" title="Delete Resident" onclick="return confirm('Delete resident {{ r.full_name }}?');">
+                  <i class="bi bi-trash"></i>
+                </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" class="text-center py-5 text-muted">
+              <i class="bi bi-people display-6 d-block mb-2 text-secondary"></i>
+              No residents match your search and filter criteria.
+              <div class="mt-3">
+                <a href="{% url 'resident_create' %}" class="btn btn-sm btn-primary">
+                  <i class="bi bi-person-plus-fill me-1"></i> Register New Resident
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center">
+    <small class="text-muted">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} residents)
+    </small>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&purok={{ purok_filter }}&sex={{ sex_filter }}&age_group={{ age_group }}&civil_status={{ civil_filter }}&verification={{ verification_filter }}">Previous</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}&q={{ query }}&purok={{ purok_filter }}&sex={{ sex_filter }}&age_group={{ age_group }}&civil_status={{ civil_filter }}&verification={{ verification_filter }}">{{ num }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&purok={{ purok_filter }}&sex={{ sex_filter }}&age_group={{ age_group }}&civil_status={{ civil_filter }}&verification={{ verification_filter }}">Next</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

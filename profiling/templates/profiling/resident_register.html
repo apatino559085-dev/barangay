@@ -1,0 +1,182 @@
+{% extends 'profiling/base_public.html' %}
+{% load static %}
+
+{% block title %}Resident Registration — Barangay Profiling System{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.12) 0%, transparent 40%), 
+                radial-gradient(circle at 90% 80%, rgba(79, 70, 229, 0.15) 0%, transparent 40%), 
+                #0f172a !important;
+    min-height: 100vh;
+  }
+  .auth-card {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  }
+  .form-control-custom {
+    padding: 0.65rem 0.9rem;
+    border-radius: 0.6rem;
+    border: 1px solid #cbd5e1;
+    font-size: 0.92rem;
+    transition: all 0.2s ease;
+  }
+  .form-control-custom:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+  .btn-gradient-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    padding: 0.8rem 1.5rem;
+    box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+    transition: all 0.25s ease;
+  }
+  .btn-gradient-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.5);
+    color: #fff;
+  }
+  .section-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 9999px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 my-md-4">
+  <div class="row justify-content-center align-items-center">
+    <div class="col-md-9 col-lg-7">
+      
+      <!-- Sleek Auth Card -->
+      <div class="card auth-card overflow-hidden">
+        
+        <div class="card-body p-4 p-sm-5">
+          
+          <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+              <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <h4 class="fw-bold text-slate-900 mb-1">Create Resident Account</h4>
+            <p class="text-muted small mb-0">Register your profile to access barangay announcements and request certificates online</p>
+          </div>
+
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3 small mb-4" role="alert">
+                <i class="bi bi-info-circle me-1"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+
+          <form method="POST" action="{% url 'resident_register' %}">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+              <span class="section-badge mb-2"><i class="bi bi-shield-lock"></i> 1. Account Credentials</span>
+            </div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="username" class="form-label fw-semibold small text-dark">Username <span class="text-danger">*</span></label>
+                <input type="text" name="username" class="form-control form-control-custom" required placeholder="Choose a username">
+              </div>
+              <div class="col-md-6">
+                <label for="password" class="form-label fw-semibold small text-dark">Password <span class="text-danger">*</span></label>
+                <input type="password" name="password" class="form-control form-control-custom" required placeholder="Create a password">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <span class="section-badge mb-2"><i class="bi bi-person-vcard"></i> 2. Resident Profile Details</span>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-8">
+                <label for="full_name" class="form-label fw-semibold small text-dark">Full Name <span class="text-danger">*</span></label>
+                <input type="text" name="full_name" class="form-control form-control-custom" required placeholder="e.g. Juan Dela Cruz">
+              </div>
+              <div class="col-md-4">
+                <label for="age" class="form-label fw-semibold small text-dark">Age <span class="text-danger">*</span></label>
+                <input type="number" name="age" class="form-control form-control-custom" min="1" max="120" required placeholder="Age">
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="gender" class="form-label fw-semibold small text-dark">Gender <span class="text-danger">*</span></label>
+                <select name="gender" class="form-select form-control-custom" required>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="civil_status" class="form-label fw-semibold small text-dark">Civil Status <span class="text-danger">*</span></label>
+                <select name="civil_status" class="form-select form-control-custom" required>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Widowed">Widowed</option>
+                  <option value="Separated">Separated</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="purok" class="form-label fw-semibold small text-dark">Purok / Address <span class="text-danger">*</span></label>
+                <input type="text" name="purok" class="form-control form-control-custom" required placeholder="e.g. Purok 1, Riverside">
+              </div>
+              <div class="col-md-6">
+                <label for="household_number" class="form-label fw-semibold small text-dark">Household Number</label>
+                <input type="text" name="household_number" class="form-control form-control-custom" placeholder="e.g. HH-2026-0012">
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="contact_number" class="form-label fw-semibold small text-dark">Contact Number</label>
+                <input type="text" name="contact_number" class="form-control form-control-custom" placeholder="e.g. 09123456789">
+              </div>
+              <div class="col-md-6">
+                <label for="occupation" class="form-label fw-semibold small text-dark">Occupation</label>
+                <input type="text" name="occupation" class="form-control form-control-custom" placeholder="e.g. Employee, Self-employed">
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+              <button type="submit" class="btn btn-gradient-primary">
+                <i class="bi bi-person-check me-2"></i> Register Account & Access Portal
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center pt-3 border-top">
+            <span class="text-muted small">Already registered?</span>
+            <a href="{% url 'resident_login' %}" class="fw-bold text-primary small text-decoration-none ms-1">
+              Log In to Portal <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

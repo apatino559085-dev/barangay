@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ doc_title }} — {{ resident.full_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @page { size: letter; margin: 20mm; }
+    body { font-family: 'Times New Roman', serif; background-color: #f8fafc; color: #000; }
+    .cert-container { background: #fff; max-width: 800px; margin: 20px auto; padding: 40px 60px; border: 2px solid #1e3a8a; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .cert-header { text-align: center; border-bottom: 2px solid #1e3a8a; padding-bottom: 15px; margin-bottom: 30px; }
+    .cert-title { font-size: 24pt; font-weight: bold; text-transform: uppercase; color: #1e3a8a; letter-spacing: 2px; margin: 25px 0; text-align: center; text-decoration: underline; }
+    .cert-body { font-size: 13pt; line-height: 1.8; text-align: justify; }
+    .signature-section { margin-top: 60px; }
+    @media print {
+      body { background: #fff; }
+      .cert-container { border: none; box-shadow: none; margin: 0; padding: 0; width: 100%; max-width: 100%; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="no-print text-center py-3 bg-dark text-white mb-3">
+  <button onclick="window.print()" class="btn btn-primary px-4 fw-bold me-2"><i class="bi bi-printer"></i> Print Certificate / Save as PDF</button>
+  <button onclick="window.close()" class="btn btn-outline-light px-3">Close Window</button>
+</div>
+
+<div class="cert-container">
+  <!-- Official Header -->
+  <div class="cert-header">
+    <div class="fw-bold" style="font-size: 11pt;">REPUBLIC OF THE PHILIPPINES</div>
+    <div class="fw-bold" style="font-size: 11pt;">PROVINCE OF CEBU / LOCAL GOVERNMENT UNIT</div>
+    <div class="fw-bold" style="font-size: 12pt; color: #1e3a8a;">OFFICE OF THE BARANGAY CAPTAIN</div>
+    <div class="text-muted small">BARANGAY PROFILING & CERTIFICATION PORTAL</div>
+  </div>
+
+  <!-- Document Title -->
+  <div class="cert-title">{{ doc_title }}</div>
+
+  <!-- Body Content -->
+  <div class="cert-body">
+    <p><strong>TO WHOM IT MAY CONCERN:</strong></p>
+
+    <p style="text-indent: 40px;">
+      THIS IS TO CERTIFY that <strong>{{ resident.full_name|upper }}</strong>, {{ resident.age }} years of age, {{ resident.gender }}, {{ resident.civil_status }}, is a bona fide resident of {{ resident.purok }}, within the jurisdiction of this Barangay.
+    </p>
+
+    {% if doc_type == 'Clearance' %}
+    <p style="text-indent: 40px;">
+      This is to certify further that according to the records on file in this office, the subject individual has <strong>NO DEROGATORY RECORD</strong> nor any pending criminal/blotter case logged in our Lupong Tagapamayapa records.
+    </p>
+    {% elif doc_type == 'Indigency' %}
+    <p style="text-indent: 40px;">
+      This is to certify further that the above-named resident belongs to an <strong>INDIGENT FAMILY</strong> in this community with low income, and is deserving of medical, financial, educational, or legal assistance.
+    </p>
+    {% else %}
+    <p style="text-indent: 40px;">
+      This is to certify further that the above-named individual has been continuously residing in this Barangay as verified in our Resident Profiling System.
+    </p>
+    {% endif %}
+
+    <p style="text-indent: 40px;">
+      This certification is issued upon the request of the interested party for the purpose of <strong>{{ purpose|upper }}</strong>.
+    </p>
+
+    <p style="text-indent: 40px;">
+      GIVEN this <strong>{{ date_issued|date:"jS" }}</strong> day of <strong>{{ date_issued|date:"F, Y" }}</strong> at the Office of the Barangay Captain.
+    </p>
+  </div>
+
+  <!-- Official Signatures Footer -->
+  <div class="row signature-section align-items-end">
+    <div class="col-12 text-end pe-5">
+      <div class="fw-bold text-uppercase" style="border-bottom: 2px solid #000; display: inline-block; padding: 0 40px;">HON. BARANGAY CAPTAIN</div>
+      <div class="small text-muted mt-1 pe-4">Punong Barangay / Presiding Officer</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  window.onload = function() {
+    setTimeout(function() {
+      window.print();
+    }, 500);
+  };
+</script>
+</body>
+</html>
